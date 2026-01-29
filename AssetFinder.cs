@@ -42,4 +42,29 @@ public static class AssetFinder
         result = casted;
         return true;
     }
+
+    //Sprite Assets
+    public static Sprite[] GetSprites(string folderPath, string fileName)
+    {
+        if (!AssetDatabase.IsValidFolder(folderPath))
+        {
+            Debug.LogWarning($"Invalid folder path: {folderPath}");
+            return Array.Empty<Sprite>();
+        }
+
+        var guids = AssetDatabase.FindAssets("t:Sprite", new[] { folderPath });
+
+        return guids
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .Where(path => Path.GetFileNameWithoutExtension(path).Equals(fileName))
+            .SelectMany(path => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>())
+            .ToArray();
+    }
+
+    public static Sprite GetSprite(string folderPath, string fileName, int index = 0)
+    {
+        var sprites = GetSprites(folderPath, fileName);
+        return sprites.IsNullOrEmpty() ? null : sprites[index];
+    }
 }
+
