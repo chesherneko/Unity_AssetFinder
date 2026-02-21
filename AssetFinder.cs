@@ -1,30 +1,50 @@
+#if UNITY_EDITOR
+using Sirenix.Utilities;
+using System;
+using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 public static class AssetFinder
 {
-    public static bool TryGetAsset<T>(string folderPath, out T result) where T : Object
+    public static bool TryGetAssets<T>(string folderPath, out T[] results) where T : UnityEngine.Object
     {
-        result = default;
+        results = Array.Empty<T>();
 
         var filter = $"t:{typeof(T).Name}";
         var guids = AssetDatabase.FindAssets(filter, new[] { folderPath });
 
         if (guids.Length <= 0)
         {
-            Debug.LogWarning($"No asset of type {typeof(T).Name} was found.");
+            Debug.LogWarning($"No assets of type {typeof(T).Name} were found.");
             return false;
         }
 
-        var filePath = AssetDatabase.GUIDToAssetPath(guids[0]);
-        result = AssetDatabase.LoadAssetAtPath<T>(filePath);
+        results = new T[guids.Length];
+        for (int i = 0; i < guids.Length; i++)
+        {
+            var filePath = AssetDatabase.GUIDToAssetPath(guids[i]);
+            results[i] = AssetDatabase.LoadAssetAtPath<T>(filePath);
+        }
 
         return true;
     }
-    
+
+    public static bool TryGetAsset<T>(string folderPath, out T result) where T : UnityEngine.Object
+    {
+        result = default;
+
+        if (!TryGetAssets(folderPath, out T[] results))
+            return false;
+
+        result = results[0];
+        return true;
+    }
+
     public static bool TryGetAsset<TSearch, TResult>(string folderPath, out TResult result) 
         where TSearch : TResult
-        where TResult : Object
+        where TResult : UnityEngine.Object
     {
         result = default;
 
@@ -67,4 +87,4 @@ public static class AssetFinder
         return sprites.IsNullOrEmpty() ? null : sprites[index];
     }
 }
-
+#endif
